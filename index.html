@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Service Feedback</title>
+  <style>
+    :root { color-scheme: light; }
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#f4f7fb;
+      color:#111827;
+    }
+    .wrap{
+      max-width:720px;
+      margin:0 auto;
+      padding:22px 14px;
+    }
+    .card{
+      background:#fff;
+      border:1px solid #e5e7eb;
+      border-radius:18px;
+      box-shadow:0 12px 30px rgba(0,0,0,0.10);
+      padding:18px;
+    }
+    .logo{
+      display:flex;
+      justify-content:center;
+      margin-bottom:14px;
+    }
+    .logo img{
+      max-width:240px;
+      width:60%;
+      height:auto;
+      object-fit:contain;
+    }
+    h1{
+      font-size:20px;
+      line-height:1.25;
+      margin:0 0 8px 0;
+      text-align:center;
+    }
+    p{
+      margin:0 0 14px 0;
+      text-align:center;
+      color:#374151;
+      font-size:15px;
+      line-height:1.5;
+    }
+    .q{
+      margin-top:10px;
+      padding-top:14px;
+      border-top:1px solid #e5e7eb;
+    }
+    .qtitle{
+      font-size:16px;
+      font-weight:700;
+      text-align:center;
+      margin:0 0 12px 0;
+      color:#111827;
+    }
+    .btnrow{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+    button{
+      border:0;
+      border-radius:12px;
+      padding:12px 18px;
+      font-size:16px;
+      font-weight:700;
+      cursor:pointer;
+      min-width:140px;
+    }
+    .yes{ background:#16a34a; color:#fff; }
+    .no{ background:#ef4444; color:#fff; }
+    .panel{
+      margin-top:14px;
+      border:1px solid #e5e7eb;
+      border-radius:14px;
+      padding:14px;
+      background:#fafafa;
+      display:none;
+    }
+    .panel h2{
+      margin:0 0 8px 0;
+      font-size:16px;
+    }
+    textarea{
+      width:100%;
+      min-height:120px;
+      resize:vertical;
+      border:1px solid #d1d5db;
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:15px;
+      box-sizing:border-box;
+      outline:none;
+      background:#fff;
+    }
+    .small{
+      font-size:13px;
+      color:#6b7280;
+      margin-top:8px;
+      text-align:left;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:10px;
+      flex-wrap:wrap;
+    }
+    .secondary{
+      background:#111827;
+      color:#fff;
+    }
+    a.reviewlink{
+      display:inline-block;
+      text-decoration:none;
+      background:#111827;
+      color:#fff;
+      border-radius:12px;
+      padding:12px 16px;
+      font-weight:700;
+      text-align:center;
+    }
+    .center{ text-align:center; }
+    .notice{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#eef2ff;
+      border:1px solid #e5e7eb;
+      color:#1f2937;
+      display:none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="logo">
+        <img id="logo" alt="Dealership Logo" />
+      </div>
+
+      <h1>Thank you for your recent service visit.</h1>
+      <p>We hope to make every visit spectacular.</p>
+
+      <div class="q">
+        <div class="qtitle">Did you have a good experience?</div>
+
+        <div class="btnrow">
+          <button class="yes" id="btnYes" type="button">Yes</button>
+          <button class="no" id="btnNo" type="button">No</button>
+        </div>
+
+        <!-- YES PANEL -->
+        <div class="panel center" id="yesPanel">
+          <h2>Awesome - we really appreciate it.</h2>
+          <p style="margin-bottom:12px;">If you have 30 seconds, would you mind leaving us a Google review?</p>
+          <a class="reviewlink" id="reviewLink" href="#" target="_blank" rel="noopener">Leave a Google Review</a>
+        </div>
+
+        <!-- NO PANEL -->
+        <div class="panel" id="noPanel">
+          <h2>We&apos;re sorry to hear that.</h2>
+          <p class="small">What could we have done better?</p>
+          <textarea id="comments" placeholder="Type your feedback here..."></textarea>
+
+          <div class="actions">
+            <button class="secondary" id="btnSend" type="button">Send Feedback</button>
+          </div>
+
+          <div class="notice" id="notice"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- CONFIG ----
+    const LOGO_URL = "https://YOURDOMAIN.com/path/to/logo.png";
+    const GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=YOUR_PLACE_ID";
+
+    // Optional: send "No" feedback somewhere (n8n webhook, Zapier, etc.)
+    // Leave blank to disable sending.
+    const FEEDBACK_WEBHOOK_URL = ""; // e.g. "https://vipautomotivegroup.app.n8n.cloud/webhook/service-feedback"
+
+    // Optional metadata from URL params (so you can pass dealer, RO, etc.)
+    const params = new URLSearchParams(window.location.search);
+    const dealer = params.get("dealer") || "";
+    const ro = params.get("ro") || "";
+    const phone = params.get("phone") || "";
+    // -----------------
+
+    const logo = document.getElementById("logo");
+    const reviewLink = document.getElementById("reviewLink");
+
+    const btnYes = document.getElementById("btnYes");
+    const btnNo = document.getElementById("btnNo");
+
+    const yesPanel = document.getElementById("yesPanel");
+    const noPanel = document.getElementById("noPanel");
+
+    const btnSend = document.getElementById("btnSend");
+    const comments = document.getElementById("comments");
+    const notice = document.getElementById("notice");
+
+    logo.src = LOGO_URL;
+    reviewLink.href = GOOGLE_REVIEW_URL;
+
+    function show(el){ el.style.display = "block"; }
+    function hide(el){ el.style.display = "none"; }
+
+    btnYes.addEventListener("click", () => {
+      show(yesPanel);
+      hide(noPanel);
+    });
+
+    btnNo.addEventListener("click", () => {
+      show(noPanel);
+      hide(yesPanel);
+      comments.focus();
+    });
+
+    btnSend.addEventListener("click", async () => {
+      const text = (comments.value || "").trim();
+      if (!text) {
+        notice.style.display = "block";
+        notice.textContent = "Please add a quick comment before sending.";
+        return;
+      }
+
+      // If no webhook is configured, just show a success message.
+      if (!FEEDBACK_WEBHOOK_URL) {
+        notice.style.display = "block";
+        notice.textContent = "Thank you - your feedback has been recorded.";
+        comments.value = "";
+        return;
+      }
+
+      btnSend.disabled = true;
+      btnSend.textContent = "Sending...";
+
+      try {
+        const payload = {
+          experience: "no",
+          comments: text,
+          dealer,
+          ro,
+          phone,
+          pageUrl: window.location.href,
+          userAgent: navigator.userAgent,
+          ts: new Date().toISOString()
+        };
+
+        const res = await fetch(FEEDBACK_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) throw new Error("Bad response");
+
+        notice.style.display = "block";
+        notice.textContent = "Thank you - your feedback has been sent to our team.";
+        comments.value = "";
+      } catch (e) {
+        notice.style.display = "block";
+        notice.textContent = "Sorry - something went wrong sending your feedback. Please try again.";
+      } finally {
+        btnSend.disabled = false;
+        btnSend.textContent = "Send Feedback";
+      }
+    });
+  </script>
+</body>
+</html>
