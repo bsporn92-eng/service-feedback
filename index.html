@@ -78,6 +78,7 @@
       flex-wrap: wrap;
     }
 
+    /* UPDATED BUTTON COLOR */
     .rating-btn {
       border: 0;
       border-radius: 10px;
@@ -86,11 +87,14 @@
       font-weight: 700;
       cursor: pointer;
       min-width: 44px;
-      background: #e5e7eb;
+      background: #5f7fa6;
+      color: #ffffff;
+      transition: background 0.15s ease;
     }
 
-    .rating-btn.high { background: #16a34a; color: #ffffff; }
-    .rating-btn.low { background: #ef4444; color: #ffffff; }
+    .rating-btn:hover {
+      background: #4f6f95;
+    }
 
     .panel {
       margin-top: 14px;
@@ -218,7 +222,6 @@
   </div>
 
   <script>
-    // ---- CONFIG ----
     const LOGO_URL = "/SouthShoreLogo.jpg";
     const GOOGLE_REVIEW_URL = "https://g.page/r/CW8q4iIUE1OHEBM/review";
     const FEEDBACK_WEBHOOK_URL = "https://vipautomotivegroup.app.n8n.cloud/webhook/sss-review-response";
@@ -246,11 +249,10 @@
     function show(el) { el.style.display = "block"; }
     function hide(el) { el.style.display = "none"; }
 
-    // Build rating buttons 1–10
     for (let i = 1; i <= 10; i++) {
       const btn = document.createElement("button");
       btn.textContent = i;
-      btn.className = "rating-btn " + (i >= 9 ? "high" : "low");
+      btn.className = "rating-btn";
 
       btn.addEventListener("click", () => {
         selectedRating = i;
