@@ -73,23 +73,24 @@
 
     .btnrow {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
       flex-wrap: wrap;
     }
 
-    button {
+    .rating-btn {
       border: 0;
-      border-radius: 12px;
-      padding: 12px 18px;
+      border-radius: 10px;
+      padding: 10px 14px;
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      min-width: 140px;
+      min-width: 44px;
+      background: #e5e7eb;
     }
 
-    .yes { background: #16a34a; color: #ffffff; }
-    .no { background: #ef4444; color: #ffffff; }
+    .rating-btn.high { background: #16a34a; color: #ffffff; }
+    .rating-btn.low { background: #ef4444; color: #ffffff; }
 
     .panel {
       margin-top: 14px;
@@ -135,6 +136,11 @@
     .secondary {
       background: #111827;
       color: #ffffff;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 0;
     }
 
     a.reviewlink {
@@ -174,12 +180,11 @@
       <p>We hope to make every visit spectacular.</p>
 
       <div class="q">
-        <div class="qtitle">Did you have a good experience?</div>
-
-        <div class="btnrow">
-          <button class="yes" id="btnYes" type="button">Yes</button>
-          <button class="no" id="btnNo" type="button">No</button>
+        <div class="qtitle">
+          Rate your experience on a scale of 1 - 10 (10 being the best)
         </div>
+
+        <div class="btnrow" id="ratingRow"></div>
 
         <!-- YES PANEL -->
         <div class="panel center" id="yesPanel">
@@ -216,17 +221,18 @@
     // ---- CONFIG ----
     const LOGO_URL = "/SouthShoreLogo.jpg";
     const GOOGLE_REVIEW_URL = "https://g.page/r/CW8q4iIUE1OHEBM/review";
-    const FEEDBACK_WEBHOOK_URL = "";
+    const FEEDBACK_WEBHOOK_URL = "https://vipautomotivegroup.app.n8n.cloud/webhook/sss-review-response";
 
     const params = new URLSearchParams(window.location.search);
     const dealer = params.get("dealer") || "";
     const ro = params.get("ro") || "";
     const phone = params.get("phone") || "";
 
+    let selectedRating = null;
+
     const logo = document.getElementById("logo");
     const reviewLink = document.getElementById("reviewLink");
-    const btnYes = document.getElementById("btnYes");
-    const btnNo = document.getElementById("btnNo");
+    const ratingRow = document.getElementById("ratingRow");
     const yesPanel = document.getElementById("yesPanel");
     const noPanel = document.getElementById("noPanel");
     const btnSend = document.getElementById("btnSend");
@@ -240,16 +246,26 @@
     function show(el) { el.style.display = "block"; }
     function hide(el) { el.style.display = "none"; }
 
-    btnYes.addEventListener("click", () => {
-      show(yesPanel);
-      hide(noPanel);
-    });
+    // Build rating buttons 1–10
+    for (let i = 1; i <= 10; i++) {
+      const btn = document.createElement("button");
+      btn.textContent = i;
+      btn.className = "rating-btn " + (i >= 9 ? "high" : "low");
 
-    btnNo.addEventListener("click", () => {
-      show(noPanel);
-      hide(yesPanel);
-      comments.focus();
-    });
+      btn.addEventListener("click", () => {
+        selectedRating = i;
+        if (i >= 9) {
+          show(yesPanel);
+          hide(noPanel);
+        } else {
+          show(noPanel);
+          hide(yesPanel);
+          comments.focus();
+        }
+      });
+
+      ratingRow.appendChild(btn);
+    }
 
     btnSend.addEventListener("click", async () => {
       const text = (comments.value || "").trim();
@@ -259,19 +275,13 @@
         return;
       }
 
-      if (!FEEDBACK_WEBHOOK_URL) {
-        notice.style.display = "block";
-        notice.textContent = "Thank you - your feedback has been recorded.";
-        comments.value = "";
-        return;
-      }
-
       btnSend.disabled = true;
       btnSend.textContent = "Sending...";
 
       try {
         const payload = {
           experience: "no",
+          rating: selectedRating,
           comments: text,
           dealer,
           ro,
